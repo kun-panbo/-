@@ -29,7 +29,7 @@ from sklearn.linear_model import Perceptron
 from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.svm import SVC
 #读取数据
 #train_data = pd.read_csv(r"../resource/happiness_train_abbr.csv")
 train = pd.read_csv(r"../resource/happiness_train_abbr.csv",parse_dates=['survey_time'],encoding='latin-1')
@@ -131,23 +131,38 @@ params = {'num_leaves': 9,
          'num_threads': 4}
 
 kfolds = KFold(n_splits=5,shuffle=True,random_state=15)
-for fold_n,(trn_index,val_index) in enumerate(kfolds.split(train,target)):
-    print("fold_n {}".format(fold_n))
-    trn_data = lgb.Dataset(train.iloc[trn_index],label=target.iloc[trn_index])
-    val_data = lgb.Dataset(train.iloc[val_index],label=target.iloc[val_index])
-    num_round=10000
-    clf = lgb.train(params, trn_data, num_round, valid_sets = [trn_data, val_data], verbose_eval=1000, early_stopping_rounds = 100)
-    oof[val_index] = clf.predict(train.iloc[val_index], num_iteration=clf.best_iteration)
-    predictions += clf.predict(test,num_iteration=clf.best_iteration)/5
-    fold_importance_df = pd.DataFrame()
-    fold_importance_df["feature"] = features
-    fold_importance_df["importance"] = clf.feature_importance()
-    fold_importance_df["fold"] = fold_n + 1
-    feature_importance_df = pd.concat([feature_importance_df, fold_importance_df], axis=0)
 
 
+
+clf = SVC()
+clf.fit(train,target)
+predictions=clf.predict(test)
 test = pd.read_csv(r"../resource/happiness_test_abbr.csv",parse_dates=['survey_time'],encoding='latin-1')
 submision_lgb1  = pd.DataFrame({"id":test['id'].values})
 submision_lgb1["happiness"]=predictions
-submision_lgb1.to_csv("submision_lgb1.csv",index=False)
-#['happiness','Age','inc_ability','gender','status_peer','family_status','health','equity','class','work_exper','health_problem','family_m','house','depression','learn','relax','edu']
+submision_lgb1.to_csv("submision_svm1.csv",index=False)
+
+# =============================================================================
+# 
+# kfolds = KFold(n_splits=5,shuffle=True,random_state=15)
+# for fold_n,(trn_index,val_index) in enumerate(kfolds.split(train,target)):
+#     print("fold_n {}".format(fold_n))
+#     trn_data = lgb.Dataset(train.iloc[trn_index],label=target.iloc[trn_index])
+#     val_data = lgb.Dataset(train.iloc[val_index],label=target.iloc[val_index])
+#     num_round=10000
+#     clf = lgb.train(params, trn_data, num_round, valid_sets = [trn_data, val_data], verbose_eval=1000, early_stopping_rounds = 100)
+#     oof[val_index] = clf.predict(train.iloc[val_index], num_iteration=clf.best_iteration)
+#     predictions += clf.predict(test,num_iteration=clf.best_iteration)/5
+#     fold_importance_df = pd.DataFrame()
+#     fold_importance_df["feature"] = features
+#     fold_importance_df["importance"] = clf.feature_importance()
+#     fold_importance_df["fold"] = fold_n + 1
+#     feature_importance_df = pd.concat([feature_importance_df, fold_importance_df], axis=0)
+# 
+# 
+# test = pd.read_csv(r"../resource/happiness_test_abbr.csv",parse_dates=['survey_time'],encoding='latin-1')
+# submision_lgb1  = pd.DataFrame({"id":test['id'].values})
+# submision_lgb1["happiness"]=predictions
+# submision_lgb1.to_csv("submision_lgb1.csv",index=False)
+# #['happiness','Age','inc_ability','gender','status_peer','family_status','health','equity','class','work_exper','health_problem','family_m','house','depression','learn','relax','edu']
+# =============================================================================
